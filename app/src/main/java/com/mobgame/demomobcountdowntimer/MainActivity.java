@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.mobgame.mobcountdowntimer.MobCountdownTimer;
 
@@ -39,6 +40,11 @@ public class MainActivity extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> parent) {
                 mobCountdownTimer.setFormat(0);
             }
+        });
+
+        ToggleButton tgBlink = (ToggleButton) findViewById(R.id.tgBlink);
+        tgBlink.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mobCountdownTimer.setEnableBlink(isChecked);
         });
 
         findViewById(R.id.btnStart).setOnClickListener(view->mobCountdownTimer.start());

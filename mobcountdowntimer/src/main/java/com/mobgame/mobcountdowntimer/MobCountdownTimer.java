@@ -5,12 +5,14 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatTextView;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.ViewTreeObserver;
 
 /**
  * Created by NamAnh on 8/31/2017.
@@ -45,9 +47,23 @@ public class MobCountdownTimer extends AppCompatTextView {
     private ValueAnimator animBlink;
 
     private OnFinishMobCountdownListener mobCountdownListener;
+    private boolean enableBlink = false;
 
     public MobCountdownTimer(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if(Build.VERSION.SDK_INT < 16){
+                    getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                }else{
+                    getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+                if(getMeasuredWidth()<getMeasuredHeight()){
+                    rotate(MOB_ORIENTATION_VERTICAL);
+                }
+            }
+        });
     }
 
 
@@ -94,13 +110,10 @@ public class MobCountdownTimer extends AppCompatTextView {
 
     public void start(){
         stop();
-        Log.d(TAG, "start: time="+timeMillis);
         isRunning = true;
         countDownTimer = new CountDownTimer(timeMillis, 1000) {
             public void onTick(long millisUntilFinished) {
                 setText(converTimeString(millisUntilFinished,timeFormat));
-                Log.d(TAG, "onTick: \"seconds remaining: " + millisUntilFinished / 1000);
-                startBlink();
             }
 
             public void onFinish() {
@@ -116,13 +129,16 @@ public class MobCountdownTimer extends AppCompatTextView {
 
         };
         countDownTimer.start();
+        if(enableBlink){
+            startBlink();
+        }
     }
     
     public void stop(){
         if(countDownTimer!=null && isRunning){
             countDownTimer.cancel();
             isRunning = false;
-            if(animBlink!=null){
+            if(animBlink!=null && enableBlink){
                 animBlink.cancel();
             }
         }
@@ -160,6 +176,23 @@ public class MobCountdownTimer extends AppCompatTextView {
         this.rotationDegree = rotationDegree;
         requestLayout();
         invalidate();
+    }
+
+    public boolean isEnableBlink() {
+        return enableBlink;
+    }
+
+    public void setEnableBlink(boolean enableBlink) {
+        this.enableBlink = enableBlink;
+        if(isRunning){
+            if(enableBlink){
+                startBlink();
+            }else{
+                if(animBlink!=null){
+                    animBlink.cancel();
+                }
+            }
+        }
     }
 
     public void setBackgroundColor(String stringColor) {
@@ -231,6 +264,6 @@ public class MobCountdownTimer extends AppCompatTextView {
     }
 
     public interface OnFinishMobCountdownListener{
-        public void onFinish();
+        void onFinish();
     }
 }
